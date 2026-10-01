@@ -230,7 +230,10 @@ const ROTULOS = {
   "08_Vegetacao_e_Entorno": "Vegetação e entorno",
 };
 const selecionaveis = [];
-new GLTFLoader().load("laboratorio_pd.glb", (gltf) => {
+// tenta o .glb (pasta do repositorio) e, se nao houver, a versao glTF/JSON (pagina publicada)
+const ARQUIVOS = ["laboratorio_pd.glb", "laboratorio_pd.gltf.json"];
+function carregarModelo(i = 0) {
+new GLTFLoader().load(ARQUIVOS[i], (gltf) => {
   const raiz = gltf.scene;
   raiz.traverse((o) => {
     if (o.isMesh) {
@@ -261,9 +264,12 @@ new GLTFLoader().load("laboratorio_pd.glb", (gltf) => {
 }, (ev) => {
   if (ev.total) document.getElementById("progresso").style.width = (100 * ev.loaded / ev.total).toFixed(0) + "%";
 }, (err) => {
-  document.getElementById("erro").textContent = "Não foi possível carregar laboratorio_pd.glb. Abra esta página pelo mesmo endereço do arquivo do modelo.";
+  if (i + 1 < ARQUIVOS.length) return carregarModelo(i + 1);
+  document.getElementById("erro").textContent = "Não foi possível carregar o modelo. Abra esta página por um servidor HTTP na mesma pasta de laboratorio_pd.glb.";
   console.error(err);
 });
+}
+carregarModelo();
 
 // corte horizontal
 const altura = document.getElementById("altura");

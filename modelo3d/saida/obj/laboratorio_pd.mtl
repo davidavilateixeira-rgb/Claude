@@ -34,12 +34,12 @@ illum 2
 newmtl Brita
 Ns 2.500001
 Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
+map_Kd brita.jpg
 
 newmtl Cinza_Maquina
 Ns 302.500000
@@ -144,12 +144,12 @@ map_Kd grama.jpg
 newmtl Grama_Campo
 Ns 2.500001
 Ka 1.000000 1.000000 1.000000
-Kd 0.800000 0.800000 0.800000
 Ks 0.500000 0.500000 0.500000
 Ke 0.000000 0.000000 0.000000
 Ni 1.500000
 d 1.000000
 illum 2
+map_Kd grama.jpg
 
 newmtl Interior_Branco
 Ns 22.499992

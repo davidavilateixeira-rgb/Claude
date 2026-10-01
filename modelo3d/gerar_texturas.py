@@ -274,7 +274,7 @@ def tex_grama():
 def tex_brita():
     n = 1024
     t = ruido_fractal(n, 20)
-    base = mistura((128, 118, 102), (172, 162, 146), t)
+    base = mistura((122, 109, 90), (164, 150, 128), t)
     im = Image.fromarray(np.clip(base, 0, 255).astype(np.uint8))
     d = ImageDraw.Draw(im)
     rng = random.Random(5)
@@ -282,7 +282,7 @@ def tex_brita():
         x, y = rng.random() * n, rng.random() * n
         rx, ry = 2 + rng.random() * 6, 2 + rng.random() * 5
         g = rng.randint(120, 215)
-        tint = rng.choice([(0, 0, 0), (12, 6, -4), (-6, -4, 0), (16, 10, 2)])
+        tint = rng.choice([(-4, -8, -14), (8, 0, -12), (-10, -12, -14), (12, 4, -8)])
         c = tuple(max(0, min(255, g + k)) for k in tint)
         sombra = tuple(int(v * 0.55) for v in c)
         def f(dx, dy, x=x, y=y, rx=rx, ry=ry, c=c, s=sombra):

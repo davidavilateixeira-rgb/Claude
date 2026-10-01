@@ -5,8 +5,8 @@
       <author>Blender User</author>
       <authoring_tool>Blender 4.2.0 commit date:2024-07-16, commit time:07:50, hash:bf738fd35afe</authoring_tool>
     </contributor>
-    <created>2026-10-01T10:53:52</created>
-    <modified>2026-10-01T10:53:52</modified>
+    <created>2026-10-01T11:13:25</created>
+    <modified>2026-10-01T11:13:25</modified>
     <unit name="meter" meter="1"/>
     <up_axis>Z_UP</up_axis>
   </asset>
@@ -421,13 +421,23 @@
     </effect>
     <effect id="Brita-effect">
       <profile_COMMON>
+        <newparam sid="brita_jpg-surface">
+          <surface type="2D">
+            <init_from>brita_jpg</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="brita_jpg-sampler">
+          <sampler2D>
+            <source>brita_jpg-surface</source>
+          </sampler2D>
+        </newparam>
         <technique sid="common">
           <lambert>
             <emission>
               <color sid="emission">0 0 0 1</color>
             </emission>
             <diffuse>
-              <color sid="diffuse">0.8 0.8 0.8 1</color>
+              <texture texture="brita_jpg-sampler" texcoord="UVMap"/>
             </diffuse>
             <index_of_refraction>
               <float sid="ior">1.5</float>
@@ -465,13 +475,23 @@
     </effect>
     <effect id="Grama_Campo-effect">
       <profile_COMMON>
+        <newparam sid="grama_jpg-surface">
+          <surface type="2D">
+            <init_from>grama_jpg</init_from>
+          </surface>
+        </newparam>
+        <newparam sid="grama_jpg-sampler">
+          <sampler2D>
+            <source>grama_jpg-surface</source>
+          </sampler2D>
+        </newparam>
         <technique sid="common">
           <lambert>
             <emission>
               <color sid="emission">0 0 0 1</color>
             </emission>
             <diffuse>
-              <color sid="diffuse">0.8 0.8 0.8 1</color>
+              <texture texture="grama_jpg-sampler" texcoord="UVMap"/>
             </diffuse>
             <index_of_refraction>
               <float sid="ior">1.5</float>
@@ -954,6 +974,9 @@
     </effect>
   </library_effects>
   <library_images>
+    <image id="brita_jpg" name="brita_jpg">
+      <init_from>brita.jpg</init_from>
+    </image>
     <image id="concreto_jpg" name="concreto_jpg">
       <init_from>concreto.jpg</init_from>
     </image>

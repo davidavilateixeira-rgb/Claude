@@ -77,8 +77,8 @@ MATS = {
     "Concreto": dict(tex="concreto.jpg", tile=3.0, r=0.85, m=0.0),
     "Concreto_Meio_Fio": dict(cor="#bdb8ad", r=0.85, m=0.0),
     "Grama": dict(tex="grama.jpg", tile=4.0, r=0.95, m=0.0),
-    "Grama_Campo": dict(tex="grama.jpg", tile=7.0, r=0.95, m=0.0, fator="#d9e6c8"),
-    "Brita": dict(tex="brita.jpg", tile=3.0, r=0.95, m=0.0, fator="#f2ebe0"),
+    "Grama_Campo": dict(tex="grama.jpg", tile=7.0, r=0.95, m=0.0),
+    "Brita": dict(tex="brita.jpg", tile=3.0, r=0.95, m=0.0),
     "Paralelepipedo": dict(tex="paralelepipedo.jpg", tile=2.2, r=0.9, m=0.0),
     "Folhagem": dict(cor="#3c672a", r=0.8, m=0.0),
     "Folhagem_Clara": dict(cor="#5e8f36", r=0.8, m=0.0),
@@ -134,16 +134,8 @@ def material(nome):
         tn = nt.nodes.new("ShaderNodeTexImage")
         tn.image = img
         tn.location = (-600, 200)
-        if "fator" in p:
-            mix = nt.nodes.new("ShaderNodeMix")
-            mix.data_type = "RGBA"
-            mix.blend_type = "MULTIPLY"
-            mix.inputs["Factor"].default_value = 1.0
-            mix.inputs[7].default_value = srgb_linear(p["fator"]) + [1.0]
-            nt.links.new(tn.outputs["Color"], mix.inputs[6])
-            nt.links.new(mix.outputs[2], bsdf.inputs["Base Color"])
-        else:
-            nt.links.new(tn.outputs["Color"], bsdf.inputs["Base Color"])
+        # textura ligada direto na cor base (assim OBJ/FBX/DAE/glTF levam a imagem junto)
+        nt.links.new(tn.outputs["Color"], bsdf.inputs["Base Color"])
         if p.get("clip"):
             arred = nt.nodes.new("ShaderNodeMath")
             arred.operation = "ROUND"
@@ -1294,3 +1286,7 @@ if __name__ == "__main__":
             renderizar(amostras)
             if "--sem-exportar" not in args:
                 bpy.ops.wm.save_as_mainfile(filepath=os.path.join(DIR_SAIDA, NOME_ARQ + ".blend"), compress=True)
+        if not os.path.basename(bpy.app.binary_path or "").lower().startswith("blender"):
+            # modulo bpy via pip: encerra direto (evita falha na finalizacao do interpretador)
+            sys.stdout.flush()
+            os._exit(0)

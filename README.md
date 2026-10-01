@@ -4,6 +4,10 @@ Modelo 3D paramétrico do laboratório de P&D em contêineres marítimos: Engenh
 
 ![Vista da fachada](modelo3d/saida/render_camera_foto_fachada.png)
 
+| Aérea | Pergolado | Escada e salas |
+|---|---|---|
+| ![Aérea](modelo3d/saida/render_camera_aerea.png) | ![Pergolado](modelo3d/saida/render_camera_pergolado.png) | ![Escada](modelo3d/saida/render_camera_escada_salas.png) |
+
 ## Arquivos prontos (`modelo3d/saida/`)
 
 | Arquivo | Abrir com | Observação |

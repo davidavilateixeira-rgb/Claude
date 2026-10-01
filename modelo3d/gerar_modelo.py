@@ -1249,9 +1249,28 @@ def exportar():
     os.makedirs(os.path.join(DIR_SAIDA, "dae_sketchup"), exist_ok=True)
     bpy.ops.wm.collada_export(filepath=os.path.join(DIR_SAIDA, "dae_sketchup", NOME_ARQ + ".dae"),
                               use_texture_copies=True, triangulate=False)
+    gerar_html_offline(base + ".glb")
     bpy.ops.file.pack_all()
     bpy.ops.wm.save_as_mainfile(filepath=base + ".blend", compress=True)
     print("Arquivos exportados em", DIR_SAIDA)
+
+
+def gerar_html_offline(caminho_glb):
+    """Copia o visualizador com o .glb embutido (abre com duplo clique, sem servidor)."""
+    import base64
+    html = os.path.join(DIR_SAIDA, "visualizador.html")
+    if not os.path.exists(html):
+        return
+    with open(html, encoding="utf-8") as f:
+        pagina = f.read()
+    with open(caminho_glb, "rb") as f:
+        dados = base64.b64encode(f.read()).decode("ascii")
+    bloco = f'<script id="modelo-embutido" type="application/octet-stream">{dados}</script>\n'
+    pagina = pagina.replace('<script type="importmap">', bloco + '<script type="importmap">', 1)
+    pasta = os.path.join(DIR_SAIDA, "Laboratorio de Engenharia 3D")
+    os.makedirs(pasta, exist_ok=True)
+    with open(os.path.join(pasta, "index.html"), "w", encoding="utf-8") as f:
+        f.write("<!doctype html>\n<html lang=\"pt-BR\">\n" + pagina + "\n</html>\n")
 
 
 def renderizar(amostras=128):

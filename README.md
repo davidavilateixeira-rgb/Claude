@@ -17,10 +17,11 @@ Modelo 3D paramétrico do laboratório de P&D em contêineres marítimos: Engenh
 | `fbx/laboratorio_pd.fbx` | 3ds Max, Revit (via vínculo), Lumion, Unreal, Unity | Texturas embutidas. |
 | `obj/laboratorio_pd.obj` + `.mtl` | Praticamente qualquer software 3D | Texturas copiadas na mesma pasta. |
 | `dae_sketchup/laboratorio_pd.dae` | SketchUp (Arquivo > Importar > COLLADA) | Importe em metros. Texturas na mesma pasta. |
-| `visualizador.html` | Navegador | Visualizador 3D com vistas, camadas, corte horizontal (planta) e medidas por peça. |
+| `Laboratorio de Engenharia 3D/index.html` | Navegador (duplo clique) | Visualizador 3D com o modelo embutido: vistas, camadas, corte horizontal (planta) e medidas por peça. Precisa de internet só para carregar a biblioteca 3D e as fontes. |
+| `visualizador.html` | Navegador, via servidor HTTP | Mesmo visualizador, lendo `laboratorio_pd.glb` da pasta. |
 | `render_*.png` | — | Imagens renderizadas (Cycles) das câmeras do arquivo. |
 
-Para usar o visualizador localmente, sirva a pasta por HTTP (o navegador bloqueia `file://`):
+O jeito mais simples é copiar a pasta `Laboratorio de Engenharia 3D` para o seu computador e abrir o `index.html`. O `visualizador.html` só funciona servido por HTTP, porque o navegador bloqueia a leitura do `.glb` em páginas abertas direto do disco (`file://`):
 
 ```bash
 cd modelo3d/saida && python3 -m http.server 8000

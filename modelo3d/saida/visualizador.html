@@ -232,8 +232,7 @@ const ROTULOS = {
 const selecionaveis = [];
 // tenta o .glb (pasta do repositorio) e, se nao houver, a versao glTF/JSON (pagina publicada)
 const ARQUIVOS = ["laboratorio_pd.glb", "laboratorio_pd.gltf.json"];
-function carregarModelo(i = 0) {
-new GLTFLoader().load(ARQUIVOS[i], (gltf) => {
+function aoCarregar(gltf) {
   const raiz = gltf.scene;
   raiz.traverse((o) => {
     if (o.isMesh) {
@@ -261,15 +260,30 @@ new GLTFLoader().load(ARQUIVOS[i], (gltf) => {
     camadasEl.appendChild(lab);
   }
   document.getElementById("carregando").hidden = true;
-}, (ev) => {
-  if (ev.total) document.getElementById("progresso").style.width = (100 * ev.loaded / ev.total).toFixed(0) + "%";
-}, (err) => {
-  if (i + 1 < ARQUIVOS.length) return carregarModelo(i + 1);
-  document.getElementById("erro").textContent = "Não foi possível carregar o modelo. Abra esta página por um servidor HTTP na mesma pasta de laboratorio_pd.glb.";
-  console.error(err);
-});
 }
-carregarModelo();
+function falhou(err) {
+  document.getElementById("erro").textContent = location.protocol === "file:"
+    ? "O navegador bloqueia a leitura do modelo quando a página é aberta direto do disco. Use o index.html da pasta \u201cLaboratório de Engenharia 3D\u201d (modelo embutido) ou sirva a pasta por HTTP."
+    : "Não foi possível carregar o modelo. Confira se laboratorio_pd.glb está na mesma pasta desta página.";
+  console.error(err);
+}
+function carregarModelo(i = 0) {
+  new GLTFLoader().load(ARQUIVOS[i], aoCarregar, (ev) => {
+    if (ev.total) document.getElementById("progresso").style.width = (100 * ev.loaded / ev.total).toFixed(0) + "%";
+  }, (err) => (i + 1 < ARQUIVOS.length ? carregarModelo(i + 1) : falhou(err)));
+}
+// versao offline: o .glb vem embutido em base64 num <script id="modelo-embutido">
+const embutido = document.getElementById("modelo-embutido");
+if (embutido) {
+  try {
+    const bin = atob(embutido.textContent.trim());
+    const bytes = new Uint8Array(bin.length);
+    for (let k = 0; k < bin.length; k++) bytes[k] = bin.charCodeAt(k);
+    new GLTFLoader().parse(bytes.buffer, "", aoCarregar, falhou);
+  } catch (err) { falhou(err); }
+} else {
+  carregarModelo();
+}
 
 // corte horizontal
 const altura = document.getElementById("altura");

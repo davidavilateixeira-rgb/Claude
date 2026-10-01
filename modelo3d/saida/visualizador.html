@@ -1,0 +1,350 @@
+<meta charset="utf-8">
+<title>Laboratório de Engenharia 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: canvas 3D em tela cheia + painel lateral estilo "placa de conteiner" (vira gaveta inferior no celular).
+   Visual escuro por escolha (mesma identidade das fachadas: preto corrugado + laranja). */
+:root {
+  --chapa: #16181b;        /* fundo do painel, preto conteiner */
+  --chapa-2: #1f2226;      /* superficies elevadas */
+  --linha: #2e3237;        /* divisorias */
+  --texto: #eceae6;
+  --texto-2: #9ea3a9;
+  --laranja: #f07a1a;      /* acento das portas e placas */
+  --ceu: #1c5bc6;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --corpo: "Barlow", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: dark;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--chapa); color: var(--texto); font-family: var(--corpo); overflow: hidden; }
+#app { position: relative; height: 100%; display: grid; grid-template-columns: 1fr 320px; }
+#palco { position: relative; min-width: 0; background: linear-gradient(#1554c4, #7fb0ea 70%, #cfe0ee); }
+#palco canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+#painel {
+  background: var(--chapa); border-left: 1px solid var(--linha);
+  overflow-y: auto; padding: 20px 18px 28px; display: flex; flex-direction: column; gap: 22px;
+  /* listras sutis de chapa corrugada */
+  background-image: repeating-linear-gradient(90deg, transparent 0 18px, rgba(255,255,255,.018) 18px 22px);
+}
+.marca { display: flex; gap: 12px; align-items: center; }
+.marca svg { flex: none; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 28px; line-height: .95; margin: 0; letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+.lema { font-family: var(--display); font-weight: 600; color: var(--laranja); letter-spacing: .12em; font-size: 12.5px; text-transform: uppercase; margin-top: 6px; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--texto-2); margin: 0 0 10px; }
+.grade-cams { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+button, .camada {
+  font: 500 13.5px/1.2 var(--corpo); color: var(--texto); background: var(--chapa-2);
+  border: 1px solid var(--linha); border-radius: 3px; padding: 9px 10px; cursor: pointer; text-align: left;
+}
+button:hover { border-color: #4a4f56; }
+button[aria-pressed="true"] { border-color: var(--laranja); box-shadow: inset 3px 0 0 var(--laranja); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--laranja); outline-offset: 2px; }
+.camadas { display: flex; flex-direction: column; gap: 4px; }
+.camada { display: flex; align-items: center; gap: 10px; padding: 7px 10px; }
+.camada input { accent-color: var(--laranja); width: 16px; height: 16px; margin: 0; }
+.camada span { flex: 1; min-width: 0; }
+.camada small { font-family: var(--mono); font-size: 11px; color: var(--texto-2); }
+.corte { display: grid; gap: 8px; }
+.corte-topo { display: flex; justify-content: space-between; align-items: baseline; }
+.corte-topo label { font-size: 13.5px; }
+.corte output { font-family: var(--mono); font-size: 12px; color: var(--laranja); font-variant-numeric: tabular-nums; }
+input[type="range"] { width: 100%; accent-color: var(--laranja); }
+.atalhos { display: flex; gap: 6px; flex-wrap: wrap; }
+.atalhos button { padding: 5px 9px; font-size: 12px; font-family: var(--mono); }
+#ficha { background: var(--chapa-2); border: 1px solid var(--linha); border-radius: 3px; padding: 12px; font-size: 13px; display: grid; gap: 6px; }
+#ficha .nome { font-family: var(--mono); font-size: 12px; color: var(--laranja); word-break: break-all; }
+#ficha dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; }
+#ficha dt { color: var(--texto-2); }
+#ficha dd { margin: 0; }
+.dica { font-size: 12.5px; color: var(--texto-2); line-height: 1.45; }
+.dimensoes { font-family: var(--mono); font-size: 11.5px; color: var(--texto-2); line-height: 1.6; }
+#carregando {
+  position: absolute; inset: 0; display: grid; place-items: center; background: rgba(15,17,20,.82);
+  font-family: var(--display); font-size: 20px; letter-spacing: .08em; text-transform: uppercase;
+}
+#carregando .barra { width: 220px; height: 4px; background: var(--linha); margin-top: 12px; }
+#carregando .barra i { display: block; height: 100%; width: 0; background: var(--laranja); transition: width .2s; }
+#erro { color: #ffb38a; font-family: var(--corpo); font-size: 14px; text-transform: none; letter-spacing: 0; max-width: 300px; text-align: center; }
+#alternar { display: none; }
+@media (max-width: 760px) {
+  #app { grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  #painel { border-left: 0; border-top: 1px solid var(--linha); max-height: 46vh; padding: 14px 16px 18px; gap: 16px; }
+  #painel.recolhido > :not(.cabeca) { display: none; }
+  #alternar { display: inline-block; margin-left: auto; padding: 6px 10px; font-size: 12px; }
+  h1 { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { #carregando .barra i { transition: none; } }
+</style>
+
+<div id="app">
+  <div id="palco">
+    <div id="carregando"><div style="text-align:center">Carregando modelo<div class="barra"><i id="progresso"></i></div><div id="erro"></div></div></div>
+  </div>
+  <aside id="painel">
+    <div class="cabeca marca">
+      <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true"><g fill="#f07a1a"><path id="eng" d="M20 6l2.4.3.8 3.1 2.2.9 2.7-1.7 3.4 3.4-1.7 2.7.9 2.2 3.1.8V22l-3.1.8-.9 2.2 1.7 2.7-3.4 3.4-2.7-1.7-2.2.9-.8 3.1h-4.8l-.8-3.1-2.2-.9-2.7 1.7-3.4-3.4 1.7-2.7-.9-2.2L5 22v-4.8l3.1-.8.9-2.2-1.7-2.7 3.4-3.4 2.7 1.7 2.2-.9.8-3.1z"/></g><circle cx="20" cy="20" r="6.5" fill="#16181b"/><circle cx="20" cy="20" r="3.6" fill="none" stroke="#f07a1a" stroke-width="1.6"/></svg>
+      <div>
+        <h1>Laboratório de Engenharia</h1>
+        <div class="lema">P&amp;D · Inovação · Prática · Soluções</div>
+      </div>
+      <button id="alternar" aria-expanded="true" aria-controls="painel">Recolher</button>
+    </div>
+
+    <section>
+      <h2>Vistas</h2>
+      <div class="grade-cams" id="cams"></div>
+    </section>
+
+    <section>
+      <h2>Camadas</h2>
+      <div class="camadas" id="camadas"></div>
+    </section>
+
+    <section class="corte">
+      <h2>Corte horizontal</h2>
+      <div class="corte-topo"><label for="altura">Altura do plano de corte</label><output id="alturaTxt" for="altura">sem corte</output></div>
+      <input type="range" id="altura" min="0.6" max="9" step="0.05" value="9">
+      <div class="atalhos">
+        <button data-corte="1.5">Planta térreo</button>
+        <button data-corte="4.4">Planta superior</button>
+        <button data-corte="9">Sem corte</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Elemento selecionado</h2>
+      <div id="ficha"><span class="dica">Toque ou clique em qualquer peça do modelo para ver o nome e as dimensões.</span></div>
+    </section>
+
+    <section>
+      <h2>Módulos</h2>
+      <div class="dimensoes">
+        Contêiner HC 40' · 12,19 × 2,44 × 2,90 m<br>
+        Contêiner HC 30' · 9,13 × 2,44 × 2,90 m<br>
+        Pergolado · vão 7,85 × 8,10 m · h 4,25 m<br>
+        Escada · 17 espelhos de 17,8 cm · piso 25,5 cm
+      </div>
+    </section>
+  </aside>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+
+const palco = document.getElementById("palco");
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.AgXToneMapping;
+renderer.toneMappingExposure = 1.15;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+palco.appendChild(renderer.domElement);
+
+const cena = new THREE.Scene();
+// ceu em degrade (mesmo do render do Blender)
+{
+  const c = document.createElement("canvas"); c.width = 2; c.height = 256;
+  const g = c.getContext("2d"); const gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, "#0f47b4"); gr.addColorStop(0.45, "#2f73d6"); gr.addColorStop(0.5, "#b9d3ec"); gr.addColorStop(1, "#b9d3ec");
+  g.fillStyle = gr; g.fillRect(0, 0, 2, 256);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.mapping = THREE.EquirectangularReflectionMapping;
+  cena.background = t;
+}
+const pmrem = new THREE.PMREMGenerator(renderer);
+cena.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+cena.environmentIntensity = 0.35;
+cena.fog = new THREE.Fog(0xb9d3ec, 140, 420);
+
+const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 1500);
+const controles = new OrbitControls(camera, renderer.domElement);
+controles.enableDamping = true;
+controles.maxPolarAngle = Math.PI * 0.495;
+controles.minDistance = 1.5;
+controles.maxDistance = 220;
+
+cena.add(new THREE.HemisphereLight(0xcfe3ff, 0x5a6b3a, 1.1));
+const sol = new THREE.DirectionalLight(0xfff0dc, 3.2);
+// sol baixo vindo da direita/frente (como na foto)
+sol.position.set(23.5 + 40, 32, 25);
+sol.target.position.set(23.5, 0, -2);
+sol.castShadow = true;
+sol.shadow.mapSize.set(4096, 4096);
+Object.assign(sol.shadow.camera, { left: -48, right: 48, top: 40, bottom: -40, near: 1, far: 160 });
+sol.shadow.bias = -0.0004;
+sol.shadow.normalBias = 0.03;
+cena.add(sol, sol.target);
+
+// plano de corte horizontal (planta baixa)
+const planoCorte = new THREE.Plane(new THREE.Vector3(0, -1, 0), 9);
+renderer.clippingPlanes = [];
+
+// Vistas: coordenadas glTF (Y para cima). Correspondem as cameras do arquivo .blend.
+const VISTAS = {
+  "Foto (fachada)": { pos: [22.5, 4.0, 47], alvo: [23.5, 5.0, 0], fov: 50 },
+  "Aérea": { pos: [-16, 30, 42], alvo: [22, 0, 4], fov: 40 },
+  "Pergolado": { pos: [13.5, 1.6, 6], alvo: [18, 1.5, -4], fov: 62 },
+  "Escada e salas": { pos: [29.5, 1.7, 9.5], alvo: [38.5, 2.8, 0], fov: 58 },
+  "Sala de reuniões": { pos: [46.6, 4.75, -0.6], alvo: [41.5, 4.1, -3.4], fov: 70 },
+  "Planta (topo)": { pos: [23.5, 75, 2], alvo: [23.5, 0, -1.5], fov: 40 },
+};
+const camsEl = document.getElementById("cams");
+let animVista = null;
+function irPara(nome, instantaneo = false) {
+  const v = VISTAS[nome];
+  for (const b of camsEl.children) b.setAttribute("aria-pressed", String(b.dataset.vista === nome));
+  const de = { pos: camera.position.clone(), alvo: controles.target.clone(), fov: camera.fov };
+  const para = { pos: new THREE.Vector3(...v.pos), alvo: new THREE.Vector3(...v.alvo), fov: v.fov };
+  const reduzir = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  animVista = { de, para, t0: performance.now(), dur: (instantaneo || reduzir) ? 0 : 1100 };
+}
+for (const nome of Object.keys(VISTAS)) {
+  const b = document.createElement("button");
+  b.textContent = nome; b.dataset.vista = nome; b.setAttribute("aria-pressed", "false");
+  b.addEventListener("click", () => irPara(nome));
+  camsEl.appendChild(b);
+}
+
+// carregar modelo
+const ROTULOS = {
+  "01_Bloco_Engenharia_Mecanica": "Bloco Engenharia Mecânica",
+  "02_Pergolado_Area_Convivencia": "Pergolado / convivência",
+  "03_Bloco_Engenharia_Automacao": "Bloco Engenharia de Automação",
+  "04_Escada_Metalica": "Escada metálica",
+  "05_Bloco_Salas_Projetos_Reunioes": "Salas de Projetos e Reuniões",
+  "06_Terreno_e_Paisagismo": "Terreno e paisagismo",
+  "07_Placa_Laboratorio": "Placa de entrada",
+  "08_Vegetacao_e_Entorno": "Vegetação e entorno",
+};
+const selecionaveis = [];
+new GLTFLoader().load("laboratorio_pd.glb", (gltf) => {
+  const raiz = gltf.scene;
+  raiz.traverse((o) => {
+    if (o.isMesh) {
+      selecionaveis.push(o);
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const transparente = mats.some((m) => m.transparent);
+      o.castShadow = !transparente && !/Campo|Gramado|Brita|Paralelep/.test(o.name);
+      o.receiveShadow = true;
+      for (const m of mats) { if (m.transparent) m.depthWrite = false; m.clipShadows = true; }
+    }
+  });
+  cena.add(raiz);
+  // camadas = colecoes de primeiro nivel do Blender
+  const camadasEl = document.getElementById("camadas");
+  const grupos = [];
+  raiz.traverse((o) => { if (ROTULOS[o.name] && !grupos.includes(o)) grupos.push(o); });
+  for (const g of grupos) {
+    let n = 0; g.traverse((o) => { if (o.isMesh) n++; });
+    const id = "cam_" + g.name;
+    const lab = document.createElement("label");
+    lab.className = "camada"; lab.htmlFor = id;
+    lab.innerHTML = `<input type="checkbox" id="${id}" checked><span></span><small>${n} obj</small>`;
+    lab.querySelector("span").textContent = ROTULOS[g.name];
+    lab.querySelector("input").addEventListener("change", (e) => { g.visible = e.target.checked; });
+    camadasEl.appendChild(lab);
+  }
+  document.getElementById("carregando").hidden = true;
+}, (ev) => {
+  if (ev.total) document.getElementById("progresso").style.width = (100 * ev.loaded / ev.total).toFixed(0) + "%";
+}, (err) => {
+  document.getElementById("erro").textContent = "Não foi possível carregar laboratorio_pd.glb. Abra esta página pelo mesmo endereço do arquivo do modelo.";
+  console.error(err);
+});
+
+// corte horizontal
+const altura = document.getElementById("altura");
+const alturaTxt = document.getElementById("alturaTxt");
+function aplicarCorte(v) {
+  altura.value = v;
+  if (v >= 8.95) { renderer.clippingPlanes = []; alturaTxt.textContent = "sem corte"; }
+  else { planoCorte.constant = v; renderer.clippingPlanes = [planoCorte]; alturaTxt.textContent = Number(v).toFixed(2).replace(".", ",") + " m"; }
+}
+altura.addEventListener("input", () => aplicarCorte(parseFloat(altura.value)));
+document.querySelectorAll("[data-corte]").forEach((b) => b.addEventListener("click", () => aplicarCorte(parseFloat(b.dataset.corte))));
+
+// selecao de pecas
+const ray = new THREE.Raycaster();
+const ficha = document.getElementById("ficha");
+let destaque = null;
+const caixaAux = new THREE.Box3Helper(new THREE.Box3(), 0xf07a1a);
+caixaAux.visible = false; cena.add(caixaAux);
+let toqueIni = null;
+renderer.domElement.addEventListener("pointerdown", (e) => { toqueIni = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener("pointerup", (e) => {
+  if (!toqueIni || Math.hypot(e.clientX - toqueIni[0], e.clientY - toqueIni[1]) > 5) return;
+  const r = renderer.domElement.getBoundingClientRect();
+  ray.setFromCamera(new THREE.Vector2(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1), camera);
+  const hits = ray.intersectObjects(selecionaveis.filter(visivel), false)
+    .filter((h) => renderer.clippingPlanes.length === 0 || h.point.y <= planoCorte.constant);
+  const alvo = hits.find((h) => !/Campo_Gramado/.test(h.object.name));
+  if (!alvo) { caixaAux.visible = false; ficha.innerHTML = '<span class="dica">Nada selecionado. Clique em uma peça do modelo.</span>'; return; }
+  mostrarFicha(alvo.object);
+});
+function visivel(o) { while (o) { if (!o.visible) return false; o = o.parent; } return true; }
+function nomePeca(o) {
+  // o glTF divide objetos com varios materiais em primitivas; sobe ate o no com nome do Blender
+  let n = o;
+  while (n.parent && n.parent.type !== "Scene" && !n.name) n = n.parent;
+  if (n.isMesh && n.parent && n.parent.isGroup && n.parent.children.every((c) => c.isMesh) && !ROTULOS[n.parent.name] && !/Conteineres|Interior|Mobiliario|Sala_de/.test(n.parent.name)) n = n.parent;
+  return n;
+}
+function grupoDe(o) { while (o) { if (ROTULOS[o.name]) return ROTULOS[o.name]; o = o.parent; } return "—"; }
+function mostrarFicha(obj) {
+  const peca = nomePeca(obj);
+  const b = new THREE.Box3().setFromObject(peca);
+  const s = b.getSize(new THREE.Vector3());
+  caixaAux.box.copy(b); caixaAux.visible = true;
+  const f = (x) => x.toFixed(2).replace(".", ",") + " m";
+  const mats = [...new Set((Array.isArray(obj.material) ? obj.material : [obj.material]).map((m) => m.name))];
+  ficha.innerHTML = `<div class="nome"></div><dl>
+    <dt>Comprimento</dt><dd>${f(s.x)}</dd><dt>Profundidade</dt><dd>${f(s.z)}</dd><dt>Altura</dt><dd>${f(s.y)}</dd>
+    <dt>Cota base</dt><dd>${f(b.min.y)}</dd><dt>Grupo</dt><dd class="g"></dd><dt>Material</dt><dd class="m"></dd></dl>`;
+  ficha.querySelector(".nome").textContent = peca.name.replace(/_/g, " ");
+  ficha.querySelector(".g").textContent = grupoDe(peca);
+  ficha.querySelector(".m").textContent = mats.join(", ").replace(/_/g, " ");
+}
+
+// painel recolhivel no celular
+const painel = document.getElementById("painel");
+document.getElementById("alternar").addEventListener("click", (e) => {
+  const rec = painel.classList.toggle("recolhido");
+  e.currentTarget.textContent = rec ? "Abrir painel" : "Recolher";
+  e.currentTarget.setAttribute("aria-expanded", String(!rec));
+});
+
+function redimensionar() {
+  const w = palco.clientWidth, h = palco.clientHeight;
+  renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
+}
+new ResizeObserver(redimensionar).observe(palco);
+redimensionar();
+irPara("Foto (fachada)", true);
+
+renderer.setAnimationLoop((t) => {
+  if (animVista) {
+    const { de, para, t0, dur } = animVista;
+    let k = dur ? Math.min(1, (t - t0) / dur) : 1;
+    const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+    camera.position.lerpVectors(de.pos, para.pos, e);
+    controles.target.lerpVectors(de.alvo, para.alvo, e);
+    camera.fov = de.fov + (para.fov - de.fov) * e; camera.updateProjectionMatrix();
+    if (k >= 1) animVista = null;
+  }
+  controles.update();
+  renderer.render(cena, camera);
+});
+</script>

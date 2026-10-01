@@ -1246,13 +1246,66 @@ def exportar():
     os.makedirs(os.path.join(DIR_SAIDA, "obj"), exist_ok=True)
     bpy.ops.wm.obj_export(filepath=os.path.join(DIR_SAIDA, "obj", NOME_ARQ + ".obj"), path_mode="COPY",
                           export_materials=True, export_object_groups=True)
-    os.makedirs(os.path.join(DIR_SAIDA, "dae_sketchup"), exist_ok=True)
-    bpy.ops.wm.collada_export(filepath=os.path.join(DIR_SAIDA, "dae_sketchup", NOME_ARQ + ".dae"),
-                              use_texture_copies=True, triangulate=False)
+    exportar_dae_sketchup(os.path.join(DIR_SAIDA, "dae_sketchup", NOME_ARQ + ".dae"))
     gerar_html_offline(base + ".glb")
     bpy.ops.file.pack_all()
     bpy.ops.wm.save_as_mainfile(filepath=base + ".blend", compress=True)
     print("Arquivos exportados em", DIR_SAIDA)
+
+
+def exportar_dae_sketchup(caminho):
+    """COLLADA pensado para o SketchUp: cada colecao vira um grupo (objeto vazio pai, na origem)
+    e as cores sao regravadas em sRGB, que e como o SketchUp le os materiais."""
+    import re
+    os.makedirs(os.path.dirname(caminho), exist_ok=True)
+    cena = bpy.context.scene
+    vazios = []
+
+    def grupo(col, pai):
+        e = bpy.data.objects.new(col.name, None)
+        cena.collection.objects.link(e)
+        e.parent = pai
+        vazios.append(e)
+        for o in col.objects:
+            if o.type == "MESH" and o.parent is None:
+                o.parent = e
+        for c in col.children:
+            grupo(c, e)
+
+    raiz = bpy.data.objects.new("Laboratorio_de_Engenharia_PD", None)
+    cena.collection.objects.link(raiz)
+    vazios.append(raiz)
+    for c in cena.collection.children:
+        if not c.name.startswith("09_"):
+            grupo(c, raiz)
+    for o in cena.objects:
+        o.select_set(o.type in {"MESH", "EMPTY"})
+    bpy.ops.wm.collada_export(filepath=caminho, use_texture_copies=True, triangulate=False, selected=True,
+                              include_children=True)
+    # desfaz o agrupamento temporario (os vazios estao na origem, nada se move)
+    for o in cena.objects:
+        if o.type == "MESH" and o.parent in vazios:
+            o.parent = None
+    for e in vazios:
+        bpy.data.objects.remove(e, do_unlink=True)
+
+    def srgb(c):
+        c = max(0.0, min(1.0, c))
+        return 12.92 * c if c <= 0.0031308 else 1.055 * c ** (1 / 2.4) - 0.055
+
+    def corrigir(m):
+        r, g_, b_, a = (float(x) for x in m.group(2).split())
+        return f'{m.group(1)}{srgb(r):.6f} {srgb(g_):.6f} {srgb(b_):.6f} {a:g}</color>'
+
+    with open(caminho, encoding="utf-8") as f:
+        dae = f.read()
+    dae = re.sub(r'(<color sid="(?:diffuse|emission)">)([^<]+)</color>', corrigir, dae)
+    # faces de dupla face (vidros, chapas e telhas aparecem dos dois lados no SketchUp)
+    dae = dae.replace("</technique>\n      </profile_COMMON>",
+                      "</technique>\n        <extra><technique profile=\"GOOGLEEARTH\"><double_sided>1</double_sided>"
+                      "</technique></extra>\n      </profile_COMMON>")
+    with open(caminho, "w", encoding="utf-8") as f:
+        f.write(dae)
 
 
 def gerar_html_offline(caminho_glb):

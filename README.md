@@ -16,7 +16,7 @@ Modelo 3D paramétrico do laboratório de P&D em contêineres marítimos: Engenh
 | `laboratorio_pd.glb` | Blender, 3ds Max, Twinmotion, Unreal, Unity, navegador | glTF binário com texturas. |
 | `fbx/laboratorio_pd.fbx` | 3ds Max, Revit (via vínculo), Lumion, Unreal, Unity | Texturas embutidas. |
 | `obj/laboratorio_pd.obj` + `.mtl` | Praticamente qualquer software 3D | Texturas copiadas na mesma pasta. |
-| `dae_sketchup/laboratorio_pd.dae` | SketchUp (Arquivo > Importar > COLLADA) | Importe em metros. Texturas na mesma pasta. |
+| `dae_sketchup/laboratorio_pd.dae` | SketchUp | Organizado em grupos por bloco, cores em sRGB, faces de dupla face. Veja "Abrir no SketchUp". |
 | `Laboratorio de Engenharia 3D/index.html` | Navegador (duplo clique) | Visualizador 3D com o modelo embutido: vistas, camadas, corte horizontal (planta) e medidas por peça. Precisa de internet só para carregar a biblioteca 3D e as fontes. |
 | `visualizador.html` | Navegador, via servidor HTTP | Mesmo visualizador, lendo `laboratorio_pd.glb` da pasta. |
 | `render_*.png` | — | Imagens renderizadas (Cycles) das câmeras do arquivo. |
@@ -27,6 +27,15 @@ O jeito mais simples é copiar a pasta `Laboratorio de Engenharia 3D` para o seu
 cd modelo3d/saida && python3 -m http.server 8000
 # abra http://localhost:8000/visualizador.html
 ```
+
+## Abrir no SketchUp
+
+1. Copie a pasta `dae_sketchup` inteira (o `.dae` e as texturas precisam ficar juntos).
+2. No SketchUp: **Arquivo > Importar**, escolha o tipo **COLLADA (*.dae)** e selecione `laboratorio_pd.dae`.
+3. Em **Opções**, marque **Mesclar faces coplanares** e deixe **Preservar origem** marcado.
+4. Clique em **Importar** e posicione o modelo na origem. Depois **Arquivo > Salvar como** `.skp`.
+
+O modelo entra como um grupo `Laboratorio_de_Engenharia_PD` com um subgrupo por bloco (Mecânica, Pergolado, Automação, Escada, Salas, Terreno, Placa, Vegetação). Use a janela **Contorno (Outliner)** para ocultar ou editar cada bloco. As medidas estão em metros.
 
 ## O que está modelado
 
